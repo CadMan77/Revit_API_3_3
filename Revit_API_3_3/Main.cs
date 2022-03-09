@@ -1,5 +1,6 @@
 ﻿//Создайте приложение, которое позволяет выбрать трубы, а также записывает их длину в метрах,
-//увеличенную на коэффициент 1.1, в созданный (заблаговременно, общий) параметр («Длина с запасом», тип Длина).
+//увеличенную на коэффициент 1.1, в (заблаговременно) созданный (, и связанный с категорией Pipe общий)
+//параметр («Длина с запасом», тип Длина).
 
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -38,28 +39,29 @@ namespace Revit_API_3_3
                 {
 
                     var pipeList = new List<Element>();
-                    double totLength = 0, totLenMeter=0, orderLenMeter=0;
+                    double pipeLength = 0, pipeLenMeter=0, stockLenMeter=0;
 
                     foreach (var selectedRef in selectedElementRefList)
                     {
                         Pipe oPipe = doc.GetElement(selectedRef) as Pipe;
-                        pipeList.Add(oPipe);
-                        //totLength += oPipe.LookupParameter("Length").AsDouble();
-                        totLength += oPipe.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsDouble();
-                    }
-                    totLenMeter = Math.Round(UnitUtils.ConvertFromInternalUnits(totLength, UnitTypeId.Meters), 2);
-                    orderLenMeter = totLenMeter*1.1;
-                    //TaskDialog.Show("Результат", $"Труб выбрано - {pipeList.Count}{Environment.NewLine}Общая длина выборки - {totLenMeter} м{Environment.NewLine}Длина с запасом (10%) - {totLenMeter} м"); 
 
-                    using (Transaction ts = new Transaction(doc, "Set Shared Parameter Value"))
-                    {
-                        ts.Start();
-                        //Parameter commentsParameter = doc.GetElement(selectedElementRefList.First()).LookupParameter("Comments");
-                        //commentsParameter.Set(orderLenMeter);
-                        Parameter dlinaZapasomParameter = doc.GetElement(selectedElementRefList.First()).LookupParameter("Длина с запасом");
-                        dlinaZapasomParameter.Set(orderLenMeter);
-                        ts.Commit();
+                        pipeList.Add(oPipe);
+                        //pipeLength = oPipe.LookupParameter("Length").AsDouble();
+                        pipeLength = oPipe.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH).AsDouble();
+                        pipeLenMeter = Math.Round(UnitUtils.ConvertFromInternalUnits(pipeLength, UnitTypeId.Meters), 2);
+                        stockLenMeter = pipeLenMeter*1.1;
+
+                        using (Transaction ts = new Transaction(doc, "Set Shared Parameter Value"))
+                        {
+                            ts.Start();
+                            //Parameter commentsParameter = oPipe.LookupParameter.LookupParameter("Comments");
+                            Parameter dlinaZapasomParameter = oPipe.LookupParameter("Длина с запасом");
+                            dlinaZapasomParameter.Set(stockLenMeter);
+                            ts.Commit();
+                        }                   
                     }
+
+                    TaskDialog.Show("Результат", $"Труб обработано - {pipeList.Count}");
                 }
             }
             catch { }
